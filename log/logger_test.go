@@ -2,8 +2,10 @@ package log_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	stdLog "log"
 	"math"
 	"reflect"
 	"strings"
@@ -681,5 +683,155 @@ func TestLog_Error_callStack(t *testing.T) {
 	got := buf.String()
 	if !strings.Contains(got, "stack") {
 		t.Error("expected a stack field, didn't get one in:\n" + got)
+	}
+}
+
+func BenchmarkLog_Debug(b *testing.B) {
+	var buf bytes.Buffer
+	logger := log.InitLog(log.WithOutput(&buf))
+	for i := 0; i < b.N; i++ {
+		logger.Debug("foo", "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkLog_Log(b *testing.B) {
+	var buf bytes.Buffer
+	logger := log.InitLog(log.WithOutput(&buf))
+	for i := 0; i < b.N; i++ {
+		logger.Log(log.Debug, "foo", "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkStandardLog_Print(b *testing.B) {
+	// We should bench standard logging with some kind of equivalent functionality.
+	prepLog := func(level, msg string) string {
+		return fmt.Sprintf("time: %s, level: %s, msg: %s", time.Now().Format(time.RFC3339), level, msg)
+	}
+	var buf bytes.Buffer
+	stdLog.SetOutput(&buf)
+	for i := 0; i < b.N; i++ {
+		stdLog.Print(prepLog("debug", "foo"))
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkLog_Debugf(b *testing.B) {
+	var buf bytes.Buffer
+	logger := log.InitLog(log.WithOutput(&buf))
+	for i := 0; i < b.N; i++ {
+		logger.Debugf("foo %s", "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkStandardLog_Printf(b *testing.B) {
+	// We should bench standard logging with some kind of equivalent functionality.
+	prepLog := func(level, msg string) string {
+		return fmt.Sprintf("time: %s, level: %s, msg: %s", time.Now().Format(time.RFC3339), level, msg) + " %s"
+	}
+	var buf bytes.Buffer
+	stdLog.SetOutput(&buf)
+	for i := 0; i < b.N; i++ {
+		stdLog.Printf(prepLog("debug", "foo"), "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkStandardLog_Printf_conditional(b *testing.B) {
+	// We should bench standard logging with some kind of equivalent functionality.
+	prepLog := func(level, msg string) string {
+		return fmt.Sprintf("time: %s, level: %s, msg: %s", time.Now().Format(time.RFC3339), level, msg) + " %s"
+	}
+	var buf bytes.Buffer
+	minLevel := "debug"
+	stdLog.SetOutput(&buf)
+	for i := 0; i < b.N; i++ {
+		if minLevel == "debug" {
+			stdLog.Printf(prepLog("debug", "foo"), "bar")
+		}
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkLog_Error(b *testing.B) {
+	var buf bytes.Buffer
+	logger := log.InitLog(log.WithOutput(&buf))
+	err := errors.New("foo")
+	for i := 0; i < b.N; i++ {
+		logger.Error(err, "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkStandardLog_Printf_withStackTrace(b *testing.B) {
+	// We should bench standard logging with some kind of equivalent functionality.
+	prepErrorLog := func(level, msg string) string {
+		return fmt.Sprintf("time: %s, level: %s, msg: %s, stack: %v", time.Now().Format(time.RFC3339), level, msg, log.GetCallStack()) + " %s"
+	}
+	var buf bytes.Buffer
+	stdLog.SetOutput(&buf)
+	for i := 0; i < b.N; i++ {
+		stdLog.Printf(prepErrorLog("error", "foo"), "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkLog_ErrorJson(b *testing.B) {
+	var buf bytes.Buffer
+	logger := log.InitLog(log.WithOutput(&buf), log.WithFormatter(&log.JsonFormatter{}))
+	err := errors.New("foo")
+	for i := 0; i < b.N; i++ {
+		logger.Error(err, "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkStandardLog_Printf_withStackTraceJson(b *testing.B) {
+	// We should bench standard logging with some kind of equivalent functionality.
+	prepErrorLog := func(level, msg string) string {
+		out := map[string]interface{}{
+			"time":  time.Now().Format(time.RFC3339),
+			"level": level,
+			"msg":   msg,
+			"stack": log.GetCallStack(),
+		}
+		by, _ := json.Marshal(out)
+		return string(by)
+	}
+	var buf bytes.Buffer
+	stdLog.SetOutput(&buf)
+	for i := 0; i < b.N; i++ {
+		stdLog.Printf(prepErrorLog("error", "foo"), "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkLog_DebugJson(b *testing.B) {
+	var buf bytes.Buffer
+	logger := log.InitLog(log.WithOutput(&buf), log.WithFormatter(&log.JsonFormatter{}))
+	for i := 0; i < b.N; i++ {
+		logger.Debug("foo", "bar")
+		buf.Truncate(0)
+	}
+}
+
+func BenchmarkStandardLog_PrintJson(b *testing.B) {
+	// We should bench standard logging with some kind of equivalent functionality.
+	prepLog := func(level, msg string) string {
+		out := map[string]string{
+			"time":  time.Now().Format(time.RFC3339),
+			"level": level,
+			"msg":   msg,
+		}
+		by, _ := json.Marshal(out)
+		return string(by)
+	}
+	var buf bytes.Buffer
+	stdLog.SetOutput(&buf)
+	for i := 0; i < b.N; i++ {
+		stdLog.Print(prepLog("debug", "foo"))
+		buf.Truncate(0)
 	}
 }
