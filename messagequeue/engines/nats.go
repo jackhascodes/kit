@@ -30,7 +30,7 @@ func (e *Nats) Close() {
 	e.conn.Close()
 }
 
-func (e *Nats) Publish(msg msg.Message) error {
+func (e *Nats) Publish(msg *msg.Message) error {
 	if msg.ReplyTopic == "" {
 		return e.conn.Publish(msg.Topic, msg.Body)
 	}
@@ -39,7 +39,7 @@ func (e *Nats) Publish(msg msg.Message) error {
 
 func (e *Nats) Subscribe(topic string, h msg.Handler) error {
 	sub, err := e.conn.Subscribe(topic, func(m *natsio.Msg) {
-		h(msg.Message{
+		h(&msg.Message{
 			Topic:      m.Subject,
 			Body:       m.Data,
 			ReplyTopic: m.Reply,
@@ -54,7 +54,7 @@ func (e *Nats) Subscribe(topic string, h msg.Handler) error {
 
 func (e *Nats) QueueSubscribe(topic, queue string, h msg.Handler) error {
 	sub, err := e.conn.QueueSubscribe(topic, queue, func(m *natsio.Msg) {
-		h(msg.Message{
+		h(&msg.Message{
 			Topic:      m.Subject,
 			Body:       m.Data,
 			ReplyTopic: m.Reply,
@@ -70,6 +70,6 @@ func (e *Nats) QueueSubscribe(topic, queue string, h msg.Handler) error {
 
 func (e *Nats) Unsubscribe(topic string) {
 	for _, sub := range e.subs {
-			sub.Unsubscribe()
+		sub.Unsubscribe()
 	}
 }

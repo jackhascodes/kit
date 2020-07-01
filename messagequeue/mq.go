@@ -1,18 +1,20 @@
 package messagequeue
 
 import (
+	"log"
+
 	"github.com/google/uuid"
 	"github.com/jackhascodes/kit/messagequeue/engines"
 	"github.com/jackhascodes/kit/messagequeue/msg"
-	"log"
 )
 
 type Engine interface {
 	Connect()
 	Close()
-	Publish(msg msg.Message) error
+	Publish(msg *msg.Message) error
 	Subscribe(string, msg.Handler) error
 	QueueSubscribe(string, string, msg.Handler) error
+	Unsubscribe(string)
 }
 
 // MQLog is a simple log wrapper to satisfy the Log interface used throughout as a default logger.
@@ -29,7 +31,8 @@ type MQ struct {
 type EngineType int
 
 const (
-	Nats EngineType = iota
+	Mock EngineType = iota
+	Nats
 	Kafka
 	Rabbit
 )
@@ -37,6 +40,8 @@ const (
 func InitMQ(engine EngineType, opts ...func(*msg.Config)) *MQ {
 
 	switch engine {
+	case Mock:
+		return InitMock(opts...)
 	case Nats:
 		return InitNats(opts...)
 	case Kafka:
@@ -50,7 +55,14 @@ func InitMQ(engine EngineType, opts ...func(*msg.Config)) *MQ {
 
 func InitKafka(opts ...func(*msg.Config)) *MQ {
 	cfg := initConfig(opts...)
-	return &MQ{engines.InitKafka(cfg)}
+	mq := &MQ{engines.InitKafka(cfg)}
+	mq.Connect()
+	return mq
+}
+
+func InitMock(opts ...func(*msg.Config)) *MQ {
+	cfg := initConfig(opts...)
+	return &MQ{engines.InitMock(cfg)}
 }
 
 func InitNats(opts ...func(*msg.Config)) *MQ {
@@ -89,7 +101,11 @@ func WithHost(host string) func(*msg.Config) {
 	}
 }
 
-func (m *MQ) Publish(msg msg.Message) error {
+func (m *MQ) Connect() {
+	m.engine.Connect()
+}
+
+func (m *MQ) Publish(msg *msg.Message) error {
 	return m.engine.Publish(msg)
 }
 
@@ -98,5 +114,13 @@ func (m *MQ) Subscribe(topic string, h msg.Handler) {
 }
 
 func (m *MQ) QueueSubscribe(topic, queue string, h msg.Handler) {
-	m.engine.Subscribe(topic, h)
+	m.engine.QueueSubscribe(topic, queue, h)
+}
+
+func (m *MQ) Unsubscribe(topic string) {
+	m.engine.Unsubscribe(topic)
+}
+
+func (m *MQ) Close() {
+	m.engine.Close()
 }

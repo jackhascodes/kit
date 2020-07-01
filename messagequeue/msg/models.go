@@ -5,8 +5,9 @@ type Log interface {
 }
 
 type Message struct {
-	Topic string
-	Body []byte
+	Id         string
+	Topic      string
+	Body       []byte
 	ReplyTopic string
 }
 
@@ -15,5 +16,4 @@ type Config struct {
 	ClientId string
 }
 
-type Handler func(Message)
-
+type Handler func(*Message)

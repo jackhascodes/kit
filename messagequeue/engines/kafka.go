@@ -2,11 +2,12 @@ package engines
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"github.com/jackhascodes/kit/messagequeue/msg"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/snappy"
-	"strings"
-	"time"
 )
 
 type Kafka struct {
@@ -21,7 +22,7 @@ type Kafka struct {
 func InitKafka(cfg *msg.Config) *Kafka {
 	return &Kafka{
 		clientId: cfg.ClientId,
-		hosts: strings.Split(cfg.Host, ","),
+		hosts:    strings.Split(cfg.Host, ","),
 	}
 }
 
@@ -34,9 +35,9 @@ func (e *Kafka) Connect() {
 
 }
 
-func (e *Kafka) Close(){}
+func (e *Kafka) Close() {}
 
-func (e *Kafka) Publish(msg msg.Message) error {
+func (e *Kafka) Publish(msg *msg.Message) error {
 	if _, ok := e.pubs[msg.Topic]; !ok {
 		config := kafka.WriterConfig{
 			Brokers:          e.hosts,
@@ -74,12 +75,11 @@ func (e *Kafka) Subscribe(topic string, h msg.Handler) error {
 				continue
 			}
 			reply := getReplyTopic(m.Headers)
-			h(msg.Message{Topic: topic, Body: m.Value, ReplyTopic: reply})
+			h(&msg.Message{Topic: topic, Body: m.Value, ReplyTopic: reply})
 		}
 	}()
 	return nil
 }
-
 
 func (e *Kafka) QueueSubscribe(topic, queue string, h msg.Handler) error {
 	config := kafka.ReaderConfig{
@@ -101,7 +101,7 @@ func (e *Kafka) QueueSubscribe(topic, queue string, h msg.Handler) error {
 				continue
 			}
 			reply := getReplyTopic(m.Headers)
-			h(msg.Message{Topic: topic, Body: m.Value, ReplyTopic: reply})
+			h(&msg.Message{Topic: topic, Body: m.Value, ReplyTopic: reply})
 		}
 	}()
 	return nil

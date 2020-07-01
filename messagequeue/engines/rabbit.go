@@ -30,7 +30,7 @@ func (e *Rabbit) Close() {
 	e.conn.Close()
 }
 
-func (e *Rabbit) Publish(msg msg.Message) error {
+func (e *Rabbit) Publish(msg *msg.Message) error {
 	ch, _ := e.conn.Channel()
 	defer ch.Close()
 	e.declareExchange(ch, msg.Topic)
@@ -62,7 +62,7 @@ func (e *Rabbit) QueueSubscribe(topic, queue string, h msg.Handler) error {
 	)
 	go func() {
 		for d := range msgs {
-			h(msg.Message{Topic: topic, Body: d.Body, ReplyTopic: d.ReplyTo})
+			h(&msg.Message{Topic: topic, Body: d.Body, ReplyTopic: d.ReplyTo})
 		}
 	}()
 	return nil
