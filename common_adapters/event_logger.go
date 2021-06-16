@@ -1,4 +1,4 @@
-package adapters
+package common_adapters
 
 import (
 	"github.com/sirupsen/logrus"
