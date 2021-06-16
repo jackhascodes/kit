@@ -2,7 +2,7 @@ package tests
 
 import (
 	"errors"
-	adapters "github.com/ParentTV/kit/common_adapters"
+	adapters "github.com/jackhascodes/kit/common_adapters"
 	"testing"
 )
 
