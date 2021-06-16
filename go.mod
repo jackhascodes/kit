@@ -1,4 +1,4 @@
-module github.com/jackhascodes/kit/common_adapters
+module github.com/jackhascodes/kit
 
 go 1.15
 
