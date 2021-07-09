@@ -24,6 +24,7 @@ func NewFileStreamPresenter(writer http.ResponseWriter) *APIPresenter {
 
 func (f *FileStreamPresenter) PresentError(topic string, err interface{}) error {
 	j, _ := json.Marshal(err)
+	f.writer.Header().Set("Content-Type", "application/json")
 	f.writer.WriteHeader(http.StatusInternalServerError)
 	f.writer.Write(j)
 	return nil

@@ -15,6 +15,7 @@ func NewAPIPresenter(writer http.ResponseWriter) *APIPresenter {
 
 func (a *APIPresenter) PresentError(topic string, err interface{}) error {
 	j, _ := json.Marshal(err)
+	a.writer.Header().Set("Content-Type", "application/json")
 	a.writer.WriteHeader(http.StatusInternalServerError)
 	a.writer.Write(j)
 	return nil
@@ -22,6 +23,7 @@ func (a *APIPresenter) PresentError(topic string, err interface{}) error {
 
 func (a *APIPresenter) PresentData(topic string, data interface{}) error {
 	j, _ := json.Marshal(data)
+	a.writer.Header().Set("Content-Type", "application/json")
 	a.writer.Write(j)
 	return nil
 }
