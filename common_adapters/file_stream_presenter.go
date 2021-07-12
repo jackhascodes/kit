@@ -2,7 +2,7 @@ package common_adapters
 
 import (
 	"encoding/json"
-	"github.com/davecgh/go-spew/spew"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -30,8 +30,9 @@ func (f *FileStreamPresenter) PresentError(topic string, err interface{}) error 
 	return nil
 }
 
-func (f *FileStreamPresenter) PresentData(topic string, file File) error {
-	f.writer.Header().Set("Content-Length", spew.Sprint("%d,", file.ContentLength()))
+func (f *FileStreamPresenter) PresentData(topic string, data interface{}) error {
+	file := data.(File)
+	f.writer.Header().Set("Content-Length", fmt.Sprintf("%d,", file.ContentLength()))
 	f.writer.Header().Set("Content-Disposition", "attachment; filename="+file.Name())
 	f.writer.Header().Set("Content-Type", file.Type())
 	io.Copy(f.writer, file.Stream())
