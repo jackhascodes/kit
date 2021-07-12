@@ -18,8 +18,8 @@ type File interface{
 	Type() string
 }
 
-func NewFileStreamPresenter(writer http.ResponseWriter) *APIPresenter {
-	return &APIPresenter{writer}
+func NewFileStreamPresenter(writer http.ResponseWriter) *FileStreamPresenter {
+	return &FileStreamPresenter{writer}
 }
 
 func (f *FileStreamPresenter) PresentError(topic string, err interface{}) error {
