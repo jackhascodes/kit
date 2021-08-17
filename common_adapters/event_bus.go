@@ -50,7 +50,7 @@ func (e *EventBus) Publish(topic string, event interface{}) {
 	for _, key := range topicMatches {
 		e.handleSubscribers(e.subscribers[key].permanent, topic, event, false)
 		e.handleSubscribers(e.subscribers[key].ephemeral, topic, event, true)
-		e.subscribers[key].ephemeral = make([]subscriptionHandler, 0)
+		//e.subscribers[key].ephemeral = make([]subscriptionHandler, 0)
 	}
 }
 
